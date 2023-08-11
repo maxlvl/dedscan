@@ -9,6 +9,7 @@
 // subdomains into a Vec of that struct with a non-initialized open_ports (as you'll add that in the port scanner
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 #[derive(Debug, Clone)]
 pub struct Subdomain {
@@ -26,21 +27,23 @@ pub struct Port {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CrtShEntry {
     pub issuer_ca_id: i32,
-    pub issuer_name: String,
-    pub common_name: String,
-    pub name_value: String,
+    pub issuer_name: Option<String>,
+    pub common_name: Option<String>,
+    pub name_value: Option<String>,
     pub id: i64,
-    pub entry_timestamp: String,
-    pub not_before: String,
-    pub not_after: String,
-    pub serial_number: String,
+    pub entry_timestamp: Option<String>,
+    pub not_before: Option<String>,
+    pub not_after: Option<String>,
+    pub serial_number: Option<String>,
 }
 
-pub fn enumerate(http_client: &Client, target: &str) -> Result<Vec<CrtShEntry>, anyhow::Error> {
+pub fn enumerate(http_client: &Client, target: &str) -> Result<(), Box<dyn std::error::Error>> {
     let entries: Vec<CrtShEntry> = http_client
         .get(&format!("https://crt.sh/?q=%25.{}&output=json", target))
         .send()?
         .json()?;
 
-    Ok(entries)
+    println!("{:#?}", entries);
+
+    Ok(())
 }
