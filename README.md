@@ -1,6 +1,6 @@
 # DEDSCAN
 
-A multi-threaded subdomain enumeration tool for the purposes of bug bounty reconaissance. 
+A multi-threaded subdomain enumeration tool for the purposes of bug bounty reconnaissance.
 
 # Disclaimer
 
