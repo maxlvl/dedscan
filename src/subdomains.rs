@@ -7,3 +7,40 @@
 
 // when that is done - declare a SubDomain struct that contains the subdomain info and open_ports, then pour your existing
 // subdomains into a Vec of that struct with a non-initialized open_ports (as you'll add that in the port scanner
+use reqwest::blocking::Client;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone)]
+pub struct Subdomain {
+    pub domain: String,
+    pub open_ports: Vec<Port>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Port {
+    pub port: u16,
+    pub is_open: bool
+}
+
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CrtShEntry {
+    pub issuer_ca_id: i32,
+    pub issuer_name: String,
+    pub common_name: String,
+    pub name_value: String,
+    pub id: i64,
+    pub entry_timestamp: String,
+    pub not_before: String,
+    pub not_after: String,
+    pub serial_number: String,
+}
+
+pub fn enumerate(http_client: &Client, target: &str) -> Result<Vec<CrtShEntry>, anyhow::Error> {
+    let entries: Vec<CrtShEntry> = http_client
+        .get(&format!("https://crt.sh/?q=%25.{}&output=json", target))
+        .send()?
+        .json()?;
+
+    Ok(entries)
+}
