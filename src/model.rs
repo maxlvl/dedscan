@@ -9,19 +9,10 @@ pub struct SubDomain {
 #[derive(Debug, Clone)]
 pub struct Port {
     pub port: u16,
-    pub is_open: bool
+    pub is_open: bool,
 }
-
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CrtShEntry {
-    pub issuer_ca_id: i32,
-    pub issuer_name: Option<String>,
-    pub common_name: Option<String>,
-    pub name_value: Option<String>,
-    pub id: i64,
-    pub entry_timestamp: Option<String>,
-    pub not_before: Option<String>,
-    pub not_after: Option<String>,
-    pub serial_number: Option<String>,
+    pub name_value: String,
 }
