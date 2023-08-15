@@ -7,16 +7,16 @@
 
 // when that is done - declare a SubDomain struct that contains the subdomain info and open_ports, then pour your existing
 // subdomains into a Vec of that struct with a non-initialized open_ports (as you'll add that in the port scanner
-use reqwest::blocking::Client;
-// use std::collections::HashSet;
 use crate::{
-    model::{
-        CrtShEntry,
-        SubDomain,
-    },
+    model::{CrtShEntry, SubDomain},
     Error,
 };
-
+use reqwest::blocking::Client;
+use std::{collections::HashSet, time::Duration};
+use trust_dns_resolver::{
+    config::{ResolverConfig, ResolverOpts},
+    Resolver,
+};
 
 pub fn enumerate(http_client: &Client, target: &str) -> Result<(), Box<dyn Error>> {
     let entries: Vec<CrtShEntry> = http_client
@@ -24,7 +24,39 @@ pub fn enumerate(http_client: &Client, target: &str) -> Result<(), Box<dyn Error
         .send()?
         .json()?;
 
-    println!("{:#?}", entries);
+    let subdomains: HashSet<String> = entries
+        .into_iter()
+        .map(|entry| {
+            entry
+                .name_value
+                .split('\n')
+                .map(|subdomain| subdomain.trim().to_string())
+                .collect::<Vec<String>>()
+        })
+        .filter(|subdomain: &String| subdomain != target)
+        .filter(|subdomain: &String| !subdomain.contains('*'))
+        .collect::<HashSet<String>>();
 
-    Ok(())
+    subdomains.insert(target.to_string());
+
+    let subdomains: Vec<SubDomain> = subdomains
+        .into_iter()
+        .map(|domain| SubDomain {
+            domain,
+            open_ports: Vec::new(),
+        })
+        .filter(resolves)
+        .collect::<Vec<SubDomain>>();
+
+    Ok(subdomains)
+}
+
+pub fn resolves(domain: SubDomain) -> bool {
+    let mut opts = ResolverOpts::default();
+    opts.timeout = Duration::from_secs(4);
+
+    let dns_resolver = Resolver::new(ResolverConfig::default(), opts)
+        .expect("subdomain resolver: building DNS Client");
+
+    dns_resolver.lookup_ip(domain.domain.as_str()).is_ok()
 }
