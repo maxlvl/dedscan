@@ -1,8 +1,10 @@
 use reqwest::blocking::Client;
 use std::error::Error;
 
+mod common_ports;
 mod error;
 mod model;
+mod ports;
 mod subdomains;
 
 fn main() -> Result<(), Box<dyn Error>> {
