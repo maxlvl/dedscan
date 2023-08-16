@@ -9,6 +9,7 @@
 // subdomains into a Vec of that struct with a non-initialized open_ports (as you'll add that in the port scanner
 use crate::{
     model::{CrtShEntry, SubDomain},
+    ports::scan_ports,
     Error,
 };
 use reqwest::blocking::Client;
@@ -18,7 +19,7 @@ use trust_dns_resolver::{
     Resolver,
 };
 
-pub fn enumerate(http_client: &Client, target: &str) -> Result<(Vec<SubDomain>), Box<dyn Error>> {
+pub fn enumerate(http_client: &Client, target: &str) -> Result<Vec<SubDomain>, Box<dyn Error>> {
     let entries: Vec<CrtShEntry> = http_client
         .get(&format!("https://crt.sh/?q=%25.{}&output=json", target))
         .send()?
@@ -46,6 +47,11 @@ pub fn enumerate(http_client: &Client, target: &str) -> Result<(Vec<SubDomain>),
             open_ports: Vec::new(),
         })
         .filter(resolves)
+        .collect();
+
+    let subdomains: Vec<SubDomain> = subdomains
+        .into_iter()
+        .map(|domain| scan_ports(domain))
         .collect();
 
     Ok(subdomains)
