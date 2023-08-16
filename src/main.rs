@@ -1,9 +1,9 @@
 use reqwest::blocking::Client;
 use std::error::Error;
 
-mod subdomains;
-mod model;
 mod error;
+mod model;
+mod subdomains;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let http_client = Client::new();
