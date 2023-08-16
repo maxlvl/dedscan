@@ -18,15 +18,15 @@ use trust_dns_resolver::{
     Resolver,
 };
 
-pub fn enumerate(http_client: &Client, target: &str) -> Result<(), Box<dyn Error>> {
+pub fn enumerate(http_client: &Client, target: &str) -> Result<(Vec<SubDomain>), Box<dyn Error>> {
     let entries: Vec<CrtShEntry> = http_client
         .get(&format!("https://crt.sh/?q=%25.{}&output=json", target))
         .send()?
         .json()?;
 
-    let subdomains: HashSet<String> = entries
+    let mut subdomains: HashSet<String> = entries
         .into_iter()
-        .map(|entry| {
+        .flat_map(|entry| {
             entry
                 .name_value
                 .split('\n')
@@ -35,7 +35,7 @@ pub fn enumerate(http_client: &Client, target: &str) -> Result<(), Box<dyn Error
         })
         .filter(|subdomain: &String| subdomain != target)
         .filter(|subdomain: &String| !subdomain.contains('*'))
-        .collect::<HashSet<String>>();
+        .collect();
 
     subdomains.insert(target.to_string());
 
@@ -46,17 +46,16 @@ pub fn enumerate(http_client: &Client, target: &str) -> Result<(), Box<dyn Error
             open_ports: Vec::new(),
         })
         .filter(resolves)
-        .collect::<Vec<SubDomain>>();
+        .collect();
 
     Ok(subdomains)
 }
 
-pub fn resolves(domain: SubDomain) -> bool {
+pub fn resolves(domain: &SubDomain) -> bool {
     let mut opts = ResolverOpts::default();
     opts.timeout = Duration::from_secs(4);
 
     let dns_resolver = Resolver::new(ResolverConfig::default(), opts)
-        .expect("subdomain resolver: building DNS Client");
-
+        .expect("subdomain resolver: building DNS client");
     dns_resolver.lookup_ip(domain.domain.as_str()).is_ok()
 }
