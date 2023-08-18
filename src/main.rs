@@ -10,25 +10,33 @@ mod subdomains;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let http_client = Client::new();
-    let target = "example.com";
+    let target = "10.10.38.228";
 
     let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(256)
+        .num_threads(255)
         .build()
         .unwrap();
-    
+
+    println!(
+        "Scanning with {} number of threads in the ThreadPool",
+        pool.current_num_threads()
+    );
+
     pool.install(|| {
-        let scan_result: Vec<SubDomain> = subdomains::enumerate(&http_client, target)
+        let scan_result: Vec<model::SubDomain> = subdomains::enumerate(&http_client, target)
             .unwrap()
             .into_par_iter()
             .map(ports::scan_ports)
             .collect();
-            // TODO continue this
-    })
 
-    let subdomains = subdomains::enumerate(&http_client, target);
-
-    println!("{:#?}", subdomains);
+        for subdomain in scan_result {
+            println!("{}:", subdomain.domain);
+            for port in subdomain.open_ports {
+                println!("      {}", port.port)
+            }
+            println!("")
+        }
+    });
 
     Ok(())
 }
