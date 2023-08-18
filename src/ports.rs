@@ -1,8 +1,9 @@
 use crate::{
-    common_ports::MOST_COMMON_PORTS_100,
+    common_ports::{MOST_COMMON_PORTS, MOST_COMMON_PORTS_100},
     model::{Port, SubDomain},
 };
 
+use rayon::prelude::*;
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::time::Duration;
 
@@ -21,12 +22,11 @@ pub fn scan_ports(mut subdomain: SubDomain) -> SubDomain {
         return subdomain;
     }
 
-    subdomain.open_ports = MOST_COMMON_PORTS_100
-        .into_iter()
+    subdomain.open_ports = MOST_COMMON_PORTS
+        .into_par_iter()
         .map(|port| scan_port(socket_addrs[0], *port))
         .filter(|port| port.is_open) // filter out closed ports
         .collect();
-
     subdomain
 }
 
