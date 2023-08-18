@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.72"
+rayon = "1.7.0"
 reqwest = { version = "0.11.18", features = ["json", "blocking", "rustls-tls"]}
 serde = { version = "1.0.183", features = ["derive"] }
 thiserror = "1.0.44"
