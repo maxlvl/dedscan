@@ -8,7 +8,9 @@ mod model;
 mod ports;
 mod subdomains;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+fn main() -> Result<(), anyhow::Error> {
+    let http_timeout = Duration::from_secs(10)
     let http_client = Client::new();
     let target = "10.10.38.228";
 
